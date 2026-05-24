@@ -1,0 +1,17 @@
+{
+  "include": [
+    "agents",
+    "tests"
+  ],
+  "extraPaths": [
+    ".",
+    "./agents"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "venvPath": ".",
+  "exclude": [
+    ".runtime",
+    ".pytest_cache"
+  ]
+}

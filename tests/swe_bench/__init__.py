@@ -1,1 +1,0 @@
-# SWE-bench tests package

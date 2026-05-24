@@ -1,191 +1,201 @@
 # CodePilot
 
-一个基于 Claude API 的智能编程助手，支持多智能体协作、任务管理、后台执行等高级功能。
+一个基于 Anthropic / Claude API 的本地 Agent 项目，支持工具调用、任务管理、多智能体协作、技能加载，以及工作记忆与会话恢复。
 
-## ✨ 特性
+当前版本已经完成一轮较完整的解耦重构，代码结构从“单文件大总控”调整为“入口层 + runtime 层 + service 层 + infra 层”，更适合后续继续迭代。
 
-- 🤖 **智能对话**: 基于 Claude Sonnet 4 的强大 AI 能力
-- 👥 **多智能体协作**: 支持创建多个协作的 AI 助手
-- 📋 **任务管理**: 内置任务系统，支持任务创建、分配和跟踪
-- 🔄 **后台执行**: 支持长时间运行的命令后台执行
-- 💾 **记忆系统**: 工作记忆和会话恢复功能
-- 🛠️ **技能加载**: 可扩展的技能系统
-- 📨 **消息总线**: 智能体间通信机制
-- 🔧 **文件操作**: 安全的文件读写和编辑功能
+## 功能概览
 
-## 📦 安装
+- Agent 主循环与工具调用
+- 安全的文件读写与 shell 执行
+- 对话期 Todo 管理
+- 持久化任务板
+- 子 Agent 执行
+- 多 teammate 协作
+- 技能系统 `skills/*/SKILL.md`
+- 工作记忆与会话快照恢复
+- 后台任务执行与消息总线
 
-### 前置要求
+## 快速开始
 
-- Python 3.8+
-- Anthropic API Key (或兼容的 API 提供商)
+### 环境要求
 
-### 安装步骤
+- Python 3.10+
+- 可用的 Anthropic 兼容 API Key
 
-1. 克隆仓库
-```bash
-git clone https://github.com/yourusername/CodePilot.git
-cd CodePilot
-```
+### 安装
 
-2. 安装依赖
 ```bash
 pip install -r requirements.txt
 ```
 
-3. 配置环境变量
+复制环境变量模板：
+
 ```bash
 cp .env.example .env
 ```
 
-编辑 `.env` 文件，填入你的 API 配置：
+最少需要配置：
+
 ```env
-ANTHROPIC_API_KEY=sk-ant-xxx
+ANTHROPIC_API_KEY=your-key
 MODEL_ID=claude-sonnet-4-6
 ```
 
-## 🚀 快速开始
+如果你使用兼容 Anthropic 协议的第三方服务，也可以设置：
 
-### 基础使用
+```env
+ANTHROPIC_BASE_URL=https://your-provider.example.com/anthropic
+```
+
+### 运行
 
 ```bash
 python agents/MyAgent.py
 ```
 
-启动后，你可以直接与 AI 助手对话，它会帮助你完成各种编程任务。
+## REPL 命令
 
-### REPL 命令
+- `/compact` 手动压缩上下文
+- `/tasks` 查看任务板
+- `/team` 查看 teammate 状态
+- `/memory` 查看记忆统计与 working memory
+- `/inbox` 查看 lead inbox
 
-在交互模式下，支持以下命令：
+## 当前项目架构
 
-- `/compact` - 手动触发对话压缩
-- `/tasks` - 查看所有任务
-- `/team` - 查看团队成员状态
-- `/inbox` - 查看收件箱消息
+### 入口层
 
-### 示例对话
+- [agents/MyAgent.py](/D:/Code/Demo/CodePilot/agents/MyAgent.py:1)
+  负责启动、装配 `AgentContext`、注册工具、接入 REPL
 
+### Runtime 层
+
+- [agents/agent_loop.py](/D:/Code/Demo/CodePilot/agents/agent_loop.py:1)
+  Agent 主循环，负责模型调用、工具结果回注、压缩与消息注入
+- [agents/repl.py](/D:/Code/Demo/CodePilot/agents/repl.py:1)
+  交互式命令行入口
+- [agents/tool_registry.py](/D:/Code/Demo/CodePilot/agents/tool_registry.py:1)
+  工具注册 facade
+- [agents/tool_schemas.py](/D:/Code/Demo/CodePilot/agents/tool_schemas.py:1)
+  工具 schema 定义
+- [agents/tool_handlers.py](/D:/Code/Demo/CodePilot/agents/tool_handlers.py:1)
+  工具 handler 绑定
+
+### Core 层
+
+- [agents/core/context.py](/D:/Code/Demo/CodePilot/agents/core/context.py:1)
+  统一依赖容器 `AgentContext`
+
+### Infra 层
+
+- [agents/config.py](/D:/Code/Demo/CodePilot/agents/config.py:1)
+  运行时配置与常量
+- [agents/infra/file_store.py](/D:/Code/Demo/CodePilot/agents/infra/file_store.py:1)
+  安全文件访问
+- [agents/infra/shell_runner.py](/D:/Code/Demo/CodePilot/agents/infra/shell_runner.py:1)
+  Shell 执行封装
+
+### Service 层
+
+- [agents/services/todo_service.py](/D:/Code/Demo/CodePilot/agents/services/todo_service.py:1)
+- [agents/services/task_service.py](/D:/Code/Demo/CodePilot/agents/services/task_service.py:1)
+- [agents/services/skill_service.py](/D:/Code/Demo/CodePilot/agents/services/skill_service.py:1)
+- [agents/services/background_service.py](/D:/Code/Demo/CodePilot/agents/services/background_service.py:1)
+- [agents/services/message_bus.py](/D:/Code/Demo/CodePilot/agents/services/message_bus.py:1)
+- [agents/services/subagent_service.py](/D:/Code/Demo/CodePilot/agents/services/subagent_service.py:1)
+- [agents/services/teammate_service.py](/D:/Code/Demo/CodePilot/agents/services/teammate_service.py:1)
+- [agents/services/team_registry.py](/D:/Code/Demo/CodePilot/agents/services/team_registry.py:1)
+- [agents/services/teammate_runner.py](/D:/Code/Demo/CodePilot/agents/services/teammate_runner.py:1)
+
+### Memory
+
+- [agents/memory.py](/D:/Code/Demo/CodePilot/agents/memory.py:1)
+  当前只保留：
+  - `WorkingMemory`
+  - `SessionDB`
+
+说明：当前版本**不再把长期知识库记忆作为已实现能力**，测试边界已经收缩到当前真实能力。
+
+## 目录结构
+
+```text
+CodePilot/
+├─ agents/
+│  ├─ MyAgent.py
+│  ├─ agent_loop.py
+│  ├─ repl.py
+│  ├─ config.py
+│  ├─ tool_registry.py
+│  ├─ tool_schemas.py
+│  ├─ tool_handlers.py
+│  ├─ memory.py
+│  ├─ core/
+│  ├─ infra/
+│  └─ services/
+├─ docs/
+│  ├─ plans/
+│  ├─ architecture.md
+│  └─ development.md
+├─ skills/
+├─ tests/
+└─ README.md
 ```
-You: 帮我创建一个 Python 函数来计算斐波那契数列
 
-Agent: 我来帮你创建这个函数...
-[Agent 会自动创建文件并实现功能]
-```
+## 技能系统
 
-## 🔧 高级功能
+技能目录位于 `skills/`，每个技能一个子目录，最少包含一个 `SKILL.md`：
 
-### 多智能体协作
-
-创建多个 AI 助手协同工作：
-
-```python
-# 在对话中使用
-spawn_teammate(name="coder", role="Python开发", prompt="帮我实现后端API")
-spawn_teammate(name="tester", role="测试工程师", prompt="为代码编写测试")
-```
-
-### 任务管理
-
-```python
-# 创建任务
-task_create(subject="实现用户认证", description="使用JWT实现用户登录")
-
-# 查看任务列表
-task_list()
-
-# 更新任务状态
-task_update(task_id=1, status="completed")
-```
-
-### 技能系统
-
-将可复用的知识封装为技能：
-
-```bash
+```text
 skills/
   my-skill/
-    SKILL.md  # 技能定义文件
+    SKILL.md
 ```
 
-在对话中加载技能：
-```python
-load_skill(name="my-skill")
-```
+Agent 会在运行时扫描这些技能，并通过 `load_skill` 工具进行按需加载。
 
-## 🌐 支持的 API 提供商
+## 测试
 
-除了 Anthropic 官方 API，还支持以下兼容提供商：
-
-| 提供商 | MODEL_ID | Base URL |
-|--------|----------|----------|
-| Anthropic | claude-sonnet-4-6 | (默认) |
-| MiniMax | MiniMax-M2.5 | https://api.minimax.io/anthropic |
-| GLM (智谱) | glm-5 | https://api.z.ai/api/anthropic |
-| Kimi (月之暗面) | kimi-k2.5 | https://api.moonshot.ai/anthropic |
-| DeepSeek | deepseek-chat | https://api.deepseek.com/anthropic |
-
-详见 `.env.example` 文件中的配置说明。
-
-## 📁 项目结构
-
-```
-CodePilot/
-├── agents/
-│   ├── MyAgent.py          # 主智能体程序
-│   ├── memory.py           # 记忆系统
-│   └── .memory/            # 记忆数据库
-├── skills/                 # 技能目录
-│   ├── code-review/
-│   ├── pdf/
-│   └── superpowers/
-├── tests/                  # 测试文件
-├── .env.example            # 环境变量示例
-├── requirements.txt        # Python 依赖
-└── README.md              # 项目文档
-```
-
-## 🧪 运行测试
+运行全部测试：
 
 ```bash
-# 运行所有测试
 pytest tests/
+```
 
-# 运行特定测试
+运行当前最核心的记忆系统测试：
+
+```bash
 pytest tests/test_memory_system.py
 ```
 
-## 🤝 贡献
+## 开发文档
 
-欢迎贡献代码！请遵循以下步骤：
+- [docs/architecture.md](/D:/Code/Demo/CodePilot/docs/architecture.md:1)
+  当前架构分层、依赖方向、运行时目录说明
+- [docs/development.md](/D:/Code/Demo/CodePilot/docs/development.md:1)
+  日常开发、扩展模块、增加工具、重构约束
+- [docs/plans/2026-05-14-agent-decoupling-design.md](/D:/Code/Demo/CodePilot/docs/plans/2026-05-14-agent-decoupling-design.md:1)
+  本轮解耦重构设计记录
 
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+## 运行时目录说明
 
-## 📄 许可证
+下面这些目录属于运行时产物，不应该作为项目源码的一部分：
 
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+- `.runtime/memory/`
+- `.runtime/tasks/`
+- `.runtime/team/`
+- `.runtime/transcripts/`
+- `.pytest_cache/`
+- `__pycache__/`
 
-## 🙏 致谢
+另外，旧结构中遗留在 `agents/` 下的：
 
-- [Anthropic](https://www.anthropic.com/) - 提供强大的 Claude API
-- 所有贡献者和使用者
+- `agents/.memory/`
+- `agents/.tasks/`
+- `agents/.team/`
 
-## 📮 联系方式
+也属于历史运行产物，建议逐步移除，不再保留。
 
-如有问题或建议，请通过以下方式联系：
+## 许可证
 
-- 提交 [Issue](https://github.com/yourusername/CodePilot/issues)
-- 发起 [Discussion](https://github.com/yourusername/CodePilot/discussions)
-
-## ⚠️ 注意事项
-
-- 请妥善保管你的 API Key，不要提交到版本控制系统
-- 使用 API 会产生费用，请注意控制使用量
-- 本项目仅供学习和研究使用
-
----
-
-**Star ⭐ 本项目以支持开发！**
+MIT，见 [LICENSE](/D:/Code/Demo/CodePilot/LICENSE:1)。
